@@ -1,5 +1,5 @@
 const accountModel = require('../models/account.model');
-
+const createWelcomeBalance = require('../controllers/transaction.controller')
 
 async function CreateAccountController(req , res) {
 
@@ -8,6 +8,8 @@ async function CreateAccountController(req , res) {
     const account = await accountModel.create({
         user : user._id,
     });
+
+   await  createWelcomeBalance.createWelcomeBalance(account._id)
 
     return res.status(201).json({
     account,

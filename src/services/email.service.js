@@ -79,50 +79,90 @@ Best regards,<br>
 
   await sendEmail(UserEmail, subject, text, html);
 }
-
 async function SendTransactionMail(userEmail, name, amount, toAccount) {
 
   const subject = "Transaction Successful";
+
   const text = `Dear ${name},
 
-We would like to inform you that your transaction has been successfully completed.
+Your transaction has been successfully completed.
 
 Transaction Details:
---------------------------------
-Amount: PKR ${amount}
-Transferred To: ${toAccount}
+----------------------------
+Amount: USD $${amount}
+Recipient: ${toAccount}
 Status: Successful
---------------------------------
+Date: ${new Date().toLocaleString()}
+
+Your account has been updated successfully.
 
 If you did not authorize this transaction, please contact our support team immediately.
 
-Thank you for banking with Falah Bank.
+Thank you for choosing Falah Bank.
 
 Best regards,
-
 Falah Bank Team
 `;
+
   const html = `
-<p>Dear <strong>${name}</strong>,</p>
+Dear <strong>${name}</strong>,<br><br>
 
-<p>Your transaction has been <strong>successfully completed</strong>.</p>
+Your transaction has been <strong>successfully completed</strong>.<br><br>
 
-<p><strong>Transaction Details:</strong></p>
+<b>Transaction Details</b><br>
+Amount: USD $${amount}<br>
+Recipient: ${toAccount}<br>
+Status: Successful<br>
+Date: ${new Date().toLocaleString()}<br><br>
 
-<ul>
-    <li><strong>Amount:</strong> PKR ${amount}</li>
-    <li><strong>Transferred To:</strong> ${toAccount}</li>
-    <li><strong>Status:</strong> Successful</li>
-</ul>
+Your account has been updated successfully.<br><br>
 
-<p>If you did not authorize this transaction, please contact our support team immediately.</p>
+If you did not authorize this transaction, please contact our support team immediately.<br><br>
 
-<p>Thank you for banking with <strong>Falah Bank</strong>.</p>
+Thank you for choosing <strong>Falah Bank</strong>.<br><br>
 
-<p>
 Best regards,<br>
 <strong>Falah Bank Team</strong>
-</p>
+`;
+
+  await sendEmail(userEmail, subject, text, html);
+}
+async function ReceiverTransactionMail(userEmail, name, amount, senderName) {
+
+  const subject = "Account Credited";
+
+  const text = `Dear ${name},
+
+Your account has been credited successfully.
+
+Transaction Details:
+----------------------------
+Amount: USD $${amount}
+Received From: ${senderName}
+Status: Successful
+Date: ${new Date().toLocaleString()}
+
+Thank you for choosing Falah Bank.
+
+Best regards,
+Falah Bank Team
+`;
+
+  const html = `
+Dear <strong>${name}</strong>,<br><br>
+
+Your account has been <strong>credited successfully</strong>.<br><br>
+
+<b>Transaction Details</b><br>
+Amount: USD $${amount}<br>
+Received From: ${senderName}<br>
+Status: Successful<br>
+Date: ${new Date().toLocaleString()}<br><br>
+
+Thank you for choosing <strong>Falah Bank</strong>.<br><br>
+
+Best regards,<br>
+<strong>Falah Bank Team</strong>
 `;
 
   await sendEmail(userEmail, subject, text, html);
@@ -163,11 +203,12 @@ Falah Bank Team`;
 <p>Thank you,<br><strong>Falah Bank Team</strong></p>
 `;
 
-await sendEmail(userEmail, subject, text, html);
+  await sendEmail(userEmail, subject, text, html);
 }
 
 module.exports = {
   SendRegistrationMail,
   SendTransactionMail,
-  SendTransactionFailureMail
+  SendTransactionFailureMail,
+  ReceiverTransactionMail
 };

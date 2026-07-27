@@ -2,7 +2,9 @@ const transactionModel = require("../models/transaction.model");
 const ledgerModel = require("../models/ledger.model");
 const accountModel = require("../models/account.model");
 const emailService = require("../services/email.service");
+const userModel = require('../models/user.model')
 const mongoose = require("mongoose");
+const crypto = require("crypto");
 
 async function createTransaction(req, res) {
 
@@ -20,6 +22,7 @@ async function createTransaction(req, res) {
     const toUserAccount = await accountModel.findOne({
         _id: toAccount
     })
+    const toUser = await userModel.findById(toUserAccount.user);
 
 
     if (!fromAccount || !toAccount) {
@@ -69,57 +72,57 @@ async function createTransaction(req, res) {
     let transaction;
 
     try {
-        
-
-    const session = await mongoose.startSession();
-    session.startTransaction();
 
 
-    transaction = (await transactionModel.create([{
-        fromAccount,
-        toAccount,
-        amount,
-        idempotencyKey,
-        status: "PENDING"
-    }], { session }))[0]
-
-    const DebitLedger = await ledgerModel.create([{
-        account: fromAccount,
-        type: "DEBIT",
-        amount: amount,
-        transaction: transaction._id
-    }], { session });
+        const session = await mongoose.startSession();
+        session.startTransaction();
 
 
-    await (() => {
-        return new Promise(resolve => setTimeout(resolve, 15 * 1000));
-    })()
+        transaction = (await transactionModel.create([{
+            fromAccount,
+            toAccount,
+            amount,
+            idempotencyKey,
+            status: "PENDING"
+        }], { session }))[0]
+
+        const DebitLedger = await ledgerModel.create([{
+            account: fromAccount,
+            type: "DEBIT",
+            amount: amount,
+            transaction: transaction._id
+        }], { session });
 
 
-    const CreditLedger = await ledgerModel.create([{
-        account: toAccount,
-        type: "CREDIT",
-        amount: amount,
-        transaction: transaction._id
-    }], { session })
-
-    await transactionModel.findOneAndUpdate(
-        { _id: transaction._id },
-        { status: "SUCCESS" },
-        { session }
-    )
+        await (() => {
+            return new Promise(resolve => setTimeout(resolve, 15 * 1000));
+        })()
 
 
-    await session.commitTransaction()
-    session.endSession()
+        const CreditLedger = await ledgerModel.create([{
+            account: toAccount,
+            type: "CREDIT",
+            amount: amount,
+            transaction: transaction._id
+        }], { session })
+
+        await transactionModel.findOneAndUpdate(
+            { _id: transaction._id },
+            { status: "SUCCESS" },
+            { session }
+        )
+
+
+        await session.commitTransaction()
+        session.endSession()
 
     } catch (error) {
         return res.status(400).json({
             message: "Transaction is pending please retry after some time",
-        })   
+        })
     }
-
-    await emailService.SendTransactionMail(req.user.email, req.user.name, amount, toAccount)
+    await emailService.SendTransactionMail(req.user.email, req.user.name, amount, toUser.name);
+    await emailService.ReceiverTransactionMail(toUser.email , toUser.name , amount , req.user.name);
 
     return res.status(200).json({
         message: "Transaction Completed Successfully",
@@ -196,5 +199,58 @@ async function createInitialFundTransaction(req, res) {
     await session.commitTransaction()
     session.endSession()
 }
+async function createWelcomeBalance(accountId) {
 
-module.exports = { createTransaction, createInitialFundTransaction }
+    const session = await mongoose.startSession();
+    const systemUser = await userModel.findOne({
+        systemUser: true
+    }).select("+systemUser");
+    const systemAccount = await accountModel.findOne({
+        user: systemUser._id
+    });
+    try {
+
+        session.startTransaction();
+
+        const transaction = (await transactionModel.create([{
+            fromAccount: systemAccount._id,
+            toAccount: accountId,
+            amount: 5000,
+            idempotencyKey: crypto.randomUUID(),
+            status: "PENDING"
+        }], { session }))[0];
+
+        // Debit
+        await ledgerModel.create([{
+            account: systemAccount._id,
+            type: "DEBIT",
+            amount: 5000,
+            transaction: transaction._id
+        }], { session });
+
+        // Credit
+        await ledgerModel.create([{
+            account: accountId,
+            type: "CREDIT",
+            amount: 5000,
+            transaction: transaction._id
+        }], { session });
+
+        transaction.status = "SUCCESS";
+        await transaction.save({ session });
+        await session.commitTransaction();
+
+
+    } catch (err) {
+
+        await session.abortTransaction();
+        throw err;
+
+    } finally {
+        
+        session.endSession();
+
+    }
+}
+
+module.exports = { createTransaction, createInitialFundTransaction , createWelcomeBalance }
