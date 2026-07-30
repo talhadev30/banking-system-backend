@@ -6,6 +6,7 @@ const authrouts = require('./routes/auth.routes')
 const accountroutes = require('./routes/account.routes')
 const cookieParser = require('cookie-parser');
 const transactionRoutes = require('./routes/transaction.routes')
+const cors = require('cors');
 
 
 
@@ -13,6 +14,10 @@ dotenv.config();
 dns.setServers(['8.8.8.8']);
 connectdb();
 const app = express();
+app.use(cors({
+  origin: "http://localhost:5173",
+  credentials: true, // only if you're using cookies
+}));
 app.use(express.json());
 app.use(cookieParser());
 

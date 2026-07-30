@@ -25,6 +25,7 @@ async function userregistercontroller(req, res) {
 
     res.cookie("token", token)
     res.status(201).json({
+        message: "user created successfully",
         user: {
             _id: user._id,
             email: user.email,
