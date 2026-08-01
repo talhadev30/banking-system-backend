@@ -1,27 +1,39 @@
 const accountModel = require('../models/account.model');
 const createWelcomeBalance = require('../controllers/transaction.controller')
 
-async function CreateAccountController(req , res) {
+async function CreateAccountController(req, res) {
 
     const user = req.user;
 
-    const account = await accountModel.create({
-        user : user._id,
+    const existingAccount = await accountModel.findOne({
+        user: user._id,
     });
 
-   await  createWelcomeBalance.createWelcomeBalance(account._id)
+    if (existingAccount) {
+        return res.status(200).json({
+            message: "Account already exists.",
+            account: existingAccount,
+        });
+    }
+
+    const account = await accountModel.create({
+        user: user._id,
+    });
+
+    await createWelcomeBalance.createWelcomeBalance(account._id)
 
     return res.status(201).json({
-    account,
+        message: "Account created successfully",
+        account,
     })
 
 }
 
 
-async function GetAllAccountsController(req , res) {
+async function GetAllAccountsController(req, res) {
 
     const accounts = await accountModel.find({
-        user : req.user._id
+        user: req.user._id
     });
 
     return res.status(200).json({
@@ -29,27 +41,27 @@ async function GetAllAccountsController(req , res) {
     });
 }
 
-async function GetAccountBalanceController(req , res) {
+async function GetAccountBalanceController(req, res) {
 
     const { accountId } = req.params;
 
     const account = await accountModel.findOne({
-        _id : accountId,
-        user : req.user._id
+        _id: accountId,
+        user: req.user._id
     });
-    
 
-    if(!account) {
+
+    if (!account) {
         return res.status(404).json({
-            message : "Account not found"
+            message: "Account not found"
         });
     }
 
-const balance = await account.getBalance();
+    const balance = await account.getBalance();
 
     return res.status(200).json({
-        accountId : account._id,
-        balance : balance
+        accountId: account._id,
+        balance: balance
     });
 
 }

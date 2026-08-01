@@ -61,6 +61,7 @@ async function userlogincontroller(req, res) {
 
     res.cookie("token", token)
     res.status(200).json({
+        message: "user logged in successfully",
         user: {
             _id: user._id,
             email: user.email,
