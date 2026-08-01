@@ -28,45 +28,24 @@ async function CreateAccountController(req, res) {
     })
 
 }
-
-
 async function GetAllAccountsController(req, res) {
+  const accounts = await accountModel.find({
+    user: req.user._id,
+  });
 
-    const accounts = await accountModel.find({
-        user: req.user._id
-    });
+  const accountsWithBalance = await Promise.all(
+    accounts.map(async (account) => ({
+      ...account.toObject(),
+      balance: await account.getBalance(), // existing function reuse
+    }))
+  );
 
-    return res.status(200).json({
-        accounts
-    });
+  return res.status(200).json({
+    accounts: accountsWithBalance,
+  });
 }
 
-async function GetAccountBalanceController(req, res) {
-
-    const { accountId } = req.params;
-
-    const account = await accountModel.findOne({
-        _id: accountId,
-        user: req.user._id
-    });
-
-
-    if (!account) {
-        return res.status(404).json({
-            message: "Account not found"
-        });
-    }
-
-    const balance = await account.getBalance();
-
-    return res.status(200).json({
-        accountId: account._id,
-        balance: balance
-    });
-
-}
 module.exports = {
     CreateAccountController,
-    GetAllAccountsController,
-    GetAccountBalanceController
+    GetAllAccountsController
 }

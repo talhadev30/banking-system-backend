@@ -18,13 +18,5 @@ router.post('/', authmiddleware.authmiddleware, accountController.CreateAccountC
 
 router.get('/', authmiddleware.authmiddleware, accountController.GetAllAccountsController);
 
-/**
- * GET /api/accounts/balance/:accountId
- * get the balance of a specific account by accountId
- */
-
-router.get('/balance/:accountId', authmiddleware.authmiddleware, accountController.GetAccountBalanceController);
-
-
 
 module.exports = router;

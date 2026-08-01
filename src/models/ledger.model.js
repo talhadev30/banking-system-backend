@@ -30,7 +30,7 @@ const ledgerSchema = new mongoose.Schema({
         required: [true, "Ledger is required "],
         immutable: true
     }
-})
+},{timestamps: true});
 
 
 function prevenledgermodifecation(){
