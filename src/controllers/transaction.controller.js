@@ -122,7 +122,7 @@ async function createTransaction(req, res) {
         })
     }
     await emailService.SendTransactionMail(req.user.email, req.user.name, amount, toUser.name);
-    await emailService.ReceiverTransactionMail(toUser.email , toUser.name , amount , req.user.name);
+    await emailService.ReceiverTransactionMail(toUser.email, toUser.name, amount, req.user.name);
 
     return res.status(200).json({
         message: "Transaction Completed Successfully",
@@ -147,8 +147,6 @@ async function createInitialFundTransaction(req, res) {
     })
 
     const accounts = await accountModel.find().select("_id user");
-
-    console.log(accounts);
 
 
     if (!toUserAccount) {
@@ -247,10 +245,69 @@ async function createWelcomeBalance(accountId) {
         throw err;
 
     } finally {
-        
+
         session.endSession();
 
     }
 }
+async function GetMonthlySummary(req, res) {
+    const { accountId } = req.params;
+    const account = await accountModel.findById(accountId);
+    const user = await userModel.findById(account.user);
 
-module.exports = { createTransaction, createInitialFundTransaction , createWelcomeBalance }
+    const result = await ledgerModel.aggregate([
+        {
+            $match: {
+                account: new mongoose.Types.ObjectId(accountId),
+            },
+        },
+        {
+            $group: {
+                _id: {
+                    month: { $month: "$createdAt" },
+                    type: "$type"
+                },
+                total: { $sum: "$amount" }
+            },
+        }
+
+    ])
+
+    const months = {
+        1: { name: "Jan", income: 0, expense: 0 },
+        2: { name: "Feb", income: 0, expense: 0 },
+        3: { name: "Mar", income: 0, expense: 0 },
+        4: { name: "Apr", income: 0, expense: 0 },
+        5: { name: "May", income: 0, expense: 0 },
+        6: { name: "Jun", income: 0, expense: 0 },
+        7: { name: "Jul", income: 0, expense: 0 },
+        8: { name: "Aug", income: 0, expense: 0 },
+        9: { name: "Sep", income: 0, expense: 0 },
+        10: { name: "Oct", income: 0, expense: 0 },
+        11: { name: "Nov", income: 0, expense: 0 },
+        12: { name: "Dec", income: 0, expense: 0 },
+    };
+
+
+    result.forEach((item) => {
+
+        if (!months[item._id.month]) {
+            console.log("invalid month", item._id.month);
+            return;
+        }
+
+        if (item._id.type === "CREDIT") {
+            months[item._id.month].income = item.total;
+        } else {
+            months[item._id.month].expense = item.total;
+        }
+
+    })
+
+    res.json({
+        user: user.name,
+        summary: Object.values(months),
+    });
+}
+
+module.exports = { createTransaction, createInitialFundTransaction, createWelcomeBalance, GetMonthlySummary }
