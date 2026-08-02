@@ -4,7 +4,7 @@ const ledgerModel = require("./ledger.model")
 const accountSchema = new mongoose.Schema({
     user: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "user",
+        ref: "User",
         required: [true, "user is required"],
         index: true
     },

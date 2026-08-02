@@ -309,5 +309,47 @@ async function GetMonthlySummary(req, res) {
         summary: Object.values(months),
     });
 }
+async function GetRecentTransactions(req, res) {
+   const { accountId } = req.params;
 
-module.exports = { createTransaction, createInitialFundTransaction, createWelcomeBalance, GetMonthlySummary }
+  try {
+    const transactions = await transactionModel.find({
+        $or: [
+          { fromAccount: accountId },
+          { toAccount: accountId }
+        ],
+        status: "SUCCESS"
+      })
+      .populate({
+        path: "fromAccount",
+        populate: {
+          path: "user",
+          select: "name"
+        }
+      })
+      .populate({
+        path: "toAccount",
+        populate: {
+          path: "user",
+          select: "name"
+        }
+      })
+      .sort({ createdAt: -1 })
+      .limit(10);
+
+    res.status(200).json({
+      transactions,
+    });
+
+  } catch (error) {
+  console.error(error);
+
+  res.status(500).json({
+    message: error.message,
+  });
+}
+
+}
+
+
+module.exports = { createTransaction, createInitialFundTransaction, createWelcomeBalance, GetMonthlySummary, GetRecentTransactions }

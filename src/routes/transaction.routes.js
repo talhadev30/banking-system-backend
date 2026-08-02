@@ -17,6 +17,15 @@ transactionRoutes.post('/' , authmiddleware.authmiddleware , transactionControll
  */
 transactionRoutes.post('/system/initial-fund' , authmiddleware.authsystemUsermiddleware , transactionController.createInitialFundTransaction)
 
+
+/**
+ * GET /api/transaction/recent-transactions/:accountId
+ * Get the recent transactions for a specific account by accountId
+ * This route is protected and can only be accessed by authenticated users
+ * The user must have a valid JWT token in the request cookie
+ */
+transactionRoutes.get("/recent-transactions/:accountId",authmiddleware.authmiddleware,transactionController.GetRecentTransactions);
+
 /**
  * GET /api/transaction/monthly-summary/:accountId
  * Get the monthly summary of transactions for a specific account by accountId

@@ -19,4 +19,5 @@ router.post('/', authmiddleware.authmiddleware, accountController.CreateAccountC
 router.get('/', authmiddleware.authmiddleware, accountController.GetAllAccountsController);
 
 
+
 module.exports = router;
