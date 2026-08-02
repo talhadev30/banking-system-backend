@@ -23,13 +23,18 @@ async function userregistercontroller(req, res) {
     })
     const token = jwt.sign({ userid: user._id }, process.env.JWT_SECRET_KEY, { expiresIn: "3d" })
 
-    res.cookie("token", token)
+    res.cookie("token", token, {
+        httpOnly: true,
+        secure: false,
+        sameSite: "lax"
+    });
     res.status(201).json({
         message: "user created successfully",
         user: {
             _id: user._id,
             email: user.email,
-            name: user.name
+            name: user.name,
+            systemuser: user.systemUser
         },
         token
     })
@@ -39,7 +44,7 @@ async function userregistercontroller(req, res) {
 async function userlogincontroller(req, res) {
     const { email, password } = req.body;
 
-    const user = await usermodule.findOne({ email }).select("+password")
+    const user = await usermodule.findOne({ email }).select("+password +systemUser")
 
     if (!user) {
         return res.status(401).json({
@@ -59,13 +64,18 @@ async function userlogincontroller(req, res) {
 
     const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET_KEY, { expiresIn: "3d" })
 
-    res.cookie("token", token)
+    res.cookie("token", token, {
+        httpOnly: true,
+        secure: false,
+        sameSite: "lax"
+    });
     res.status(200).json({
         message: "user logged in successfully",
         user: {
             _id: user._id,
             email: user.email,
-            name: user.name
+            name: user.name,
+            systemUser :user.systemUser
         },
         token
     })
