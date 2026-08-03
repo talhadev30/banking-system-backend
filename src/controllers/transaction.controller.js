@@ -8,28 +8,57 @@ const crypto = require("crypto");
 
 async function createTransaction(req, res) {
 
-    const { fromAccount, toAccount, amount, idempotencyKey } = req.body;
+    const { toAccount, amount, idempotencyKey } = req.body;
 
-    if (!fromAccount || !toAccount || !amount || !idempotencyKey) {
+    if (!toAccount || !amount || !idempotencyKey) {
         return res.status(400).json({
-            message: " fromAccount toAccount amount idempotencyKey are required"
+            message: "toAccount amount idempotencyKey are required"
         })
     }
 
     const formUserAccount = await accountModel.findOne({
-        _id: fromAccount
+        user: req.user._id
     })
+
+    if (!mongoose.Types.ObjectId.isValid(toAccount)) {
+        return res.status(404).json({
+            message: "Account not found"
+        });
+    }
+
+
     const toUserAccount = await accountModel.findOne({
         _id: toAccount
     })
-    const toUser = await userModel.findById(toUserAccount.user);
 
+    if (!formUserAccount) {
+        return res.status(403).json({
+            message: "You are not authorized to use this account"
+        });
+    }
 
-    if (!fromAccount || !toAccount) {
+    if (!toUserAccount) {
         return res.status(400).json({
-            message: "invalid FromAccount and toAccount"
+            message: "Account not found"
         })
     }
+    const fromAccount = formUserAccount._id;
+
+    if (fromAccount.toString() === toAccount.toString()) {
+        return res.status(400).json({
+            message: "You cannot transfer money to your own account"
+        });
+    }
+
+    if (amount < 1) {
+        return res.status(400).json({
+            message:"amount must be grater than 0"
+        })
+    }
+
+
+    const toUser = await userModel.findById(toUserAccount.user);
+
 
     const IsTransactionAlreadyExists = await transactionModel.findOne({
         idempotencyKey: idempotencyKey
@@ -130,7 +159,6 @@ async function createTransaction(req, res) {
     })
 
 
-
 }
 async function createInitialFundTransaction(req, res) {
 
@@ -142,17 +170,19 @@ async function createInitialFundTransaction(req, res) {
         })
     }
 
-    const toUserAccount = await accountModel.findOne({
-        _id: toAccount
-    })
+    if (!mongoose.Types.ObjectId.isValid(toAccount)) {
+        return res.status(404).json({
+            message: "Account not found"
+        });
+    }
 
-    const accounts = await accountModel.find().select("_id user");
 
+    const toUserAccount = await accountModel.findById(toAccount);
 
     if (!toUserAccount) {
-        return res.status(400).json({
-            message: "invalid toAccount"
-        })
+        return res.status(404).json({
+            message: "Account not found"
+        });
     }
 
     const formUserAccount = await accountModel.findOne({
@@ -163,6 +193,11 @@ async function createInitialFundTransaction(req, res) {
         return res.status(400).json({
             message: "System user account not found"
         })
+    }
+    if (formUserAccount._id.toString() === toAccount.toString()) {
+        return res.status(400).json({
+            message: "You cannot transfer money to your own account"
+        });
     }
 
 
@@ -196,6 +231,11 @@ async function createInitialFundTransaction(req, res) {
     await transaction.save({ session })
     await session.commitTransaction()
     session.endSession()
+
+    return res.status(200).json({
+        message: "Transaction Completed Successfully",
+        transaction
+    });
 }
 async function createWelcomeBalance(accountId) {
 
@@ -292,7 +332,6 @@ async function GetMonthlySummary(req, res) {
     result.forEach((item) => {
 
         if (!months[item._id.month]) {
-            console.log("invalid month", item._id.month);
             return;
         }
 
@@ -310,44 +349,44 @@ async function GetMonthlySummary(req, res) {
     });
 }
 async function GetRecentTransactions(req, res) {
-   const { accountId } = req.params;
+    const { accountId } = req.params;
 
-  try {
-    const transactions = await transactionModel.find({
-        $or: [
-          { fromAccount: accountId },
-          { toAccount: accountId }
-        ],
-        status: "SUCCESS"
-      })
-      .populate({
-        path: "fromAccount",
-        populate: {
-          path: "user",
-          select: "name"
-        }
-      })
-      .populate({
-        path: "toAccount",
-        populate: {
-          path: "user",
-          select: "name"
-        }
-      })
-      .sort({ createdAt: -1 })
-      .limit(10);
+    try {
+        const transactions = await transactionModel.find({
+            $or: [
+                { fromAccount: accountId },
+                { toAccount: accountId }
+            ],
+            status: "SUCCESS"
+        })
+            .populate({
+                path: "fromAccount",
+                populate: {
+                    path: "user",
+                    select: "name"
+                }
+            })
+            .populate({
+                path: "toAccount",
+                populate: {
+                    path: "user",
+                    select: "name"
+                }
+            })
+            .sort({ createdAt: -1 })
+            .limit(10);
 
-    res.status(200).json({
-      transactions,
-    });
+        res.status(200).json({
+            transactions,
+        });
 
-  } catch (error) {
-  console.error(error);
+    } catch (error) {
+        console.error(error);
 
-  res.status(500).json({
-    message: error.message,
-  });
-}
+        res.status(500).json({
+            message: error.message,
+        });
+    }
 
 }
 
