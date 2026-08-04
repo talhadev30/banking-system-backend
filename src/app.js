@@ -10,10 +10,6 @@ const cors = require('cors');
 
 
 
-dotenv.config();
-dns.setServers(['8.8.8.8']);
-connectdb();
-const app = express();
 app.use(cors({
   origin: [
     "http://localhost:5173",
@@ -21,6 +17,10 @@ app.use(cors({
   ],
   credentials: true,
 }));
+dotenv.config();
+dns.setServers(['8.8.8.8']);
+connectdb();
+const app = express();
 app.use(express.json());
 app.use(cookieParser());
 
