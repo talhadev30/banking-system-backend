@@ -9,6 +9,7 @@ const transactionRoutes = require('./routes/transaction.routes')
 const cors = require('cors');
 
 
+const app = express();
 
 app.use(cors({
   origin: [
@@ -20,7 +21,6 @@ app.use(cors({
 dotenv.config();
 dns.setServers(['8.8.8.8']);
 connectdb();
-const app = express();
 app.use(express.json());
 app.use(cookieParser());
 
