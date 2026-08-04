@@ -15,7 +15,10 @@ dns.setServers(['8.8.8.8']);
 connectdb();
 const app = express();
 app.use(cors({
-  origin: "http://localhost:5173",
+  origin: [
+    "http://localhost:5173",
+    "https://talha-banking-system.vercel.app/"
+  ],
   credentials: true,
 }));
 app.use(express.json());
