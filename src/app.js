@@ -16,7 +16,7 @@ connectdb();
 const app = express();
 app.use(cors({
   origin: "http://localhost:5173",
-  credentials: true, // only if you're using cookies
+  credentials: true,
 }));
 app.use(express.json());
 app.use(cookieParser());
