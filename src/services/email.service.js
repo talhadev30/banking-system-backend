@@ -21,12 +21,11 @@ const transporter = nodemailer.createTransport({
 });
 
 // Verify the connection configuration
-transporter.verify((error, success) => {
-  if (error) {
-    console.error('Error connecting to email server:', error);
-  }
-  if (success) {
-    console.log('Email server is ready to take messages');
+transporter.verify((err, success) => {
+  if (err) {
+    console.error(err);
+  } else {
+    console.log("SMTP Ready");
   }
 });
 
