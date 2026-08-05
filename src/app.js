@@ -18,6 +18,7 @@ app.use(cors({
   credentials: true,
 }));
 dotenv.config();
+dns.setDefaultResultOrder("ipv4first")
 dns.setServers(['8.8.8.8']);
 connectdb();
 app.use(express.json());
