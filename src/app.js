@@ -24,6 +24,9 @@ connectdb();
 app.use(express.json());
 app.use(cookieParser());
 
+app.get("/",(req, res)=>{
+  res.send("server is running")
+})
 app.use("/api/auth/" , authrouts)
 app.use("/api/accounts/" , accountroutes)
 app.use("/api/transaction/" , transactionRoutes)
