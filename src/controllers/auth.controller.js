@@ -25,8 +25,8 @@ async function userregistercontroller(req, res) {
 
     res.cookie("token", token, {
         httpOnly: true,
-        secure: false,
-        sameSite: "lax"
+        secure: true,
+        sameSite: "none",
     });
     res.status(201).json({
         message: "user created successfully",
@@ -66,8 +66,8 @@ async function userlogincontroller(req, res) {
 
     res.cookie("token", token, {
         httpOnly: true,
-        secure: false,
-        sameSite: "lax"
+        secure: true,
+        sameSite: "none",
     });
     res.status(200).json({
         message: "user logged in successfully",
@@ -75,7 +75,7 @@ async function userlogincontroller(req, res) {
             _id: user._id,
             email: user.email,
             name: user.name,
-            systemUser :user.systemUser
+            systemUser: user.systemUser
         },
         token
     })
