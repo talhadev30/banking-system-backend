@@ -25,9 +25,10 @@ async function userregistercontroller(req, res) {
 
     res.cookie("token", token, {
         httpOnly: true,
-        secure: true,
-        sameSite: "none",
+        secure: process.env.NODE_ENV === "production",
+        sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
     });
+    
     res.status(201).json({
         message: "user created successfully",
         user: {
@@ -66,9 +67,10 @@ async function userlogincontroller(req, res) {
 
     res.cookie("token", token, {
         httpOnly: true,
-        secure: true,
-        sameSite: "none",
+        secure: process.env.NODE_ENV === "production",
+        sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
     });
+
     res.status(200).json({
         message: "user logged in successfully",
         user: {
