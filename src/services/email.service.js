@@ -1,15 +1,23 @@
 require('dotenv').config();
 const nodemailer = require('nodemailer');
+const dns = require('dns');
 
 const transporter = nodemailer.createTransport({
-  service: 'gmail',
+  host: 'smtp.gmail.com',
+  port: 465,
+  secure: true, // use SSL
   auth: {
-    type: 'OAuth2',
+    type: "OAuth2",
     user: process.env.EMAIL_USER,
     clientId: process.env.CLIENT_ID,
     clientSecret: process.env.CLIENT_SECRET,
     refreshToken: process.env.REFRESH_TOKEN,
   },
+  // force IPv4 resolution to avoid ENETUNREACH IPv6 errors
+  lookup: (hostname, options, callback) => dns.lookup(hostname, { family: 4 }, callback),
+  tls: {
+    rejectUnauthorized: false
+  }
 });
 
 // Verify the connection configuration
