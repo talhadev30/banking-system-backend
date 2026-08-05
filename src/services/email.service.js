@@ -1,43 +1,67 @@
-require('dotenv').config();
-const nodemailer = require('nodemailer');
+require("dotenv").config();
 
-const transporter = nodemailer.createTransport({
-  service: 'gmail',
-  auth: {
-    type: 'OAuth2',
-    user: process.env.EMAIL_USER,
-    clientId: process.env.CLIENT_ID,
-    clientSecret: process.env.CLIENT_SECRET,
-    refreshToken: process.env.REFRESH_TOKEN,
-  },
+const nodemailer = require("nodemailer");
+const { google } = require("googleapis");
+
+const oauth2Client = new google.auth.OAuth2(
+  process.env.CLIENT_ID,
+  process.env.CLIENT_SECRET,
+  "https://developers.google.com/oauthplayground"
+);
+
+oauth2Client.setCredentials({
+  refresh_token: process.env.REFRESH_TOKEN,
 });
 
-// Verify the connection configuration
-transporter.verify((error, success) => {
-  if (error) {
-    console.error('Error connecting to email server:', error);
-  }
-  if (success) {
-    console.log('Email server is ready to take messages');
-  }
-});
+async function createTransporter() {
+  const accessToken = await oauth2Client.getAccessToken();
 
-// Function to send email
+  return nodemailer.createTransport({
+    service: "gmail",
+    auth: {
+      type: "OAuth2",
+      user: process.env.EMAIL_USER,
+      clientId: process.env.CLIENT_ID,
+      clientSecret: process.env.CLIENT_SECRET,
+      refreshToken: process.env.REFRESH_TOKEN,
+      accessToken: accessToken.token,
+    },
+  });
+}
 
-const sendEmail = async (to, subject, text, html) => {
+// Verify Connection
+async function verifyConnection() {
   try {
+    const transporter = await createTransporter();
+    await transporter.verify();
+    console.log("Email server is ready");
+  } catch (error) {
+    console.error("Email server error:", error);
+  }
+}
+
+verifyConnection();
+
+// Send Email function
+async function sendEmail(to, subject, text, html) {
+  try {
+    const transporter = await createTransporter();
+
     const info = await transporter.sendMail({
-      from: `"AFD Bank" <${process.env.EMAIL_USER}>`, // sender address
-      to, // list of receivers
-      subject, // Subject line
-      text, // plain text body
-      html, // html body
+      from: `"AFD Bank" <${process.env.EMAIL_USER}>`,
+      to,
+      subject,
+      text,
+      html,
     });
 
+    console.log("✅ Email Sent:", info.messageId);
+    return info;
   } catch (error) {
-    console.error('Error sending email:', error);
+    console.error("❌ Error sending email:", error);
+    throw error;
   }
-};
+}
 
 async function SendRegistrationMail(UserEmail, name) {
 
