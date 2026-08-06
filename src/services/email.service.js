@@ -1,26 +1,23 @@
-require('dotenv').config();
-const nodemailer = require('nodemailer');
-const dns = require("dns");
+require("dotenv").config();
 
-dns.setDefaultResultOrder("ipv4first");
+const nodemailer = require("nodemailer");
+
 const transporter = nodemailer.createTransport({
-  service: 'gmail',
+  host: process.env.SMTP_HOST,
+  port: Number(process.env.SMTP_PORT),
+  secure: false,
   auth: {
-    user: process.env.EMAIL_USER,
-    clientId: process.env.CLIENT_ID,
-    clientSecret: process.env.CLIENT_SECRET,
-    refreshToken: process.env.REFRESH_TOKEN,
-    pass: process.env.APP_PASSWORD,
+    user: process.env.SMTP_USER,
+    pass: process.env.SMTP_PASS,
   },
 });
 
 // Verify the connection configuration
 transporter.verify((error, success) => {
   if (error) {
-    console.error('Error connecting to email server:', error);
-  }
-  if (success) {
-    console.log('Email server is ready to take messages');
+    console.error("SMTP Error:", error);
+  } else {
+    console.log("Brevo SMTP Connected");
   }
 });
 
@@ -29,7 +26,7 @@ transporter.verify((error, success) => {
 const sendEmail = async (to, subject, text, html) => {
   try {
     const info = await transporter.sendMail({
-      from: `"AFD Bank" <${process.env.EMAIL_USER}>`, // sender address
+      from: `"${process.env.SENDER_NAME}" <${process.env.SENDER_EMAIL}>`, // sender address
       to, // list of receivers
       subject, // Subject line
       text, // plain text body
