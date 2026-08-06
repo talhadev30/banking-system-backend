@@ -1,43 +1,41 @@
 require("dotenv").config();
+const axios = require("axios");
 
-const nodemailer = require("nodemailer");
-
-const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST,
-  port: Number(process.env.SMTP_PORT),
-  secure: false,
-  auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS,
-  },
-});
-
-// Verify the connection configuration
-transporter.verify((error, success) => {
-  if (error) {
-    console.error("SMTP Error:", error);
-  } else {
-    console.log("Brevo SMTP Connected");
-  }
-});
-
-// Function to send email
 
 const sendEmail = async (to, subject, text, html) => {
   try {
-    const info = await transporter.sendMail({
-      from: `"${process.env.SENDER_NAME}" <${process.env.SENDER_EMAIL}>`, // sender address
-      to, // list of receivers
-      subject, // Subject line
-      text, // plain text body
-      html, // html body
-    });
+    const response = await axios.post(
+      "https://api.brevo.com/v3/smtp/email",
+      {
+        sender: {
+          name: process.env.SENDER_NAME,
+          email: process.env.SENDER_EMAIL,
+        },
+        to: [
+          {
+            email: to,
+          },
+        ],
+        subject: subject,
+        textContent: text,
+        htmlContent: html,
+      },
+      {
+        headers: {
+          "api-key": process.env.BREVO_API_KEY,
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+      }
+    );
 
+    console.log("✅ Email Sent Successfully");
+    console.log(response.data);
   } catch (error) {
-    console.error('Error sending email:', error);
+    console.error("❌ Brevo Error:");
+    console.error(error.response?.data || error.message);
   }
 };
-
 async function SendRegistrationMail(UserEmail, name) {
 
   const subject = "Welcome to Falah Bank - Account Registration Successful";
