@@ -1,41 +1,47 @@
-require("dotenv").config();
-const axios = require("axios");
+require('dotenv').config();
+const nodemailer = require('nodemailer');
+const dns = require("dns");
 
+dns.setDefaultResultOrder("ipv4first");
+const transporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    type: 'OAuth2',
+    user: process.env.EMAIL_USER,
+    clientId: process.env.CLIENT_ID,
+    clientSecret: process.env.CLIENT_SECRET,
+    refreshToken: process.env.REFRESH_TOKEN,
+    pass: process.env.APP_PASSWORD,
+  },
+});
+
+// Verify the connection configuration
+transporter.verify((error, success) => {
+  if (error) {
+    console.error('Error connecting to email server:', error);
+  }
+  if (success) {
+    console.log('Email server is ready to take messages');
+  }
+});
+
+// Function to send email
 
 const sendEmail = async (to, subject, text, html) => {
   try {
-    const response = await axios.post(
-      "https://api.brevo.com/v3/smtp/email",
-      {
-        sender: {
-          name: process.env.SENDER_NAME,
-          email: process.env.SENDER_EMAIL,
-        },
-        to: [
-          {
-            email: to,
-          },
-        ],
-        subject: subject,
-        textContent: text,
-        htmlContent: html,
-      },
-      {
-        headers: {
-          "api-key": process.env.BREVO_API_KEY,
-          "Content-Type": "application/json",
-          Accept: "application/json",
-        },
-      }
-    );
+    const info = await transporter.sendMail({
+      from: `"AFD Bank" <${process.env.EMAIL_USER}>`, // sender address
+      to, // list of receivers
+      subject, // Subject line
+      text, // plain text body
+      html, // html body
+    });
 
-    console.log("✅ Email Sent Successfully");
-    console.log(response.data);
   } catch (error) {
-    console.error("❌ Brevo Error:");
-    console.error(error.response?.data || error.message);
+    console.error('Error sending email:', error);
   }
 };
+
 async function SendRegistrationMail(UserEmail, name) {
 
   const subject = "Welcome to Falah Bank - Account Registration Successful";
